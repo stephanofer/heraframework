@@ -1,0 +1,24 @@
+package fr.maxlego08.menu.requirement.actions;
+
+import fr.maxlego08.menu.api.button.Button;
+import fr.maxlego08.menu.api.engine.InventoryEngine;
+import fr.maxlego08.menu.api.utils.Placeholders;
+import fr.maxlego08.menu.common.utils.ActionHelper;
+import org.bukkit.entity.Player;
+import org.jspecify.annotations.NonNull;
+
+import java.util.List;
+
+public class PlayerChatAction extends ActionHelper {
+
+    private final List<String> commands;
+
+    public PlayerChatAction(List<String> commands) {
+        this.commands = commands;
+    }
+
+    @Override
+    protected void execute(@NonNull Player player, Button button, @NonNull InventoryEngine inventory, @NonNull Placeholders placeholders) {
+        papi(placeholders.parse(this.parseAndFlattenCommands(this.commands, player)), player).forEach(command -> player.chat(command.replace("%player%", player.getName())));
+    }
+}

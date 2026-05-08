@@ -1,0 +1,60 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+dependencies {
+    // Referenced dependencies
+    compileOnly "io.papermc.paper:paper-api:$spigotVersion-R0.1-SNAPSHOT"
+    compileOnly 'me.clip:placeholderapi:2.11.6'
+
+    // Shaded dependencies
+    api 'org.bstats:bstats-bukkit:3.0.2'
+    api 'com.zaxxer:HikariCP:4.0.3'
+    api 'org.slf4j:slf4j-api:2.0.13'
+    api 'org.slf4j:slf4j-nop:2.0.13'
+
+    // Test dependencies
+    testImplementation 'org.junit.jupiter:junit-jupiter:6.0.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.mockito:mockito-core:5.23.0'
+    testCompileOnly 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
+    testImplementation 'com.github.seeseemelk:MockBukkit-v1.21:3.106.0'
+}
+
+tasks.register('processSource', Sync) {
+    from sourceSets.main.java
+    inputs.property 'version', version
+    filter(ReplaceTokens, tokens: [version: version])
+    into "${layout.buildDirectory.get()}/src"
+}
+
+tasks.register('sourcesJar', Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
+
+compileJava {
+    source = processSource.outputs
+}
+
+compileTestJava {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+shadowJar {
+    archiveClassifier.set(null)
+
+    relocate('org.bstats', 'dev.rosewood.rosegarden.lib.bstats')
+}
+
+publishing {
+    publications {
+        shadow(MavenPublication) { publication ->
+            artifactId = 'rosegarden'
+            from components.shadow
+            artifact sourcesJar
+        }
+    }
+}
+
+build.dependsOn shadowJar
+generateMetadataFileForShadowPublication.dependsOn jar

@@ -1,0 +1,6 @@
+name: HeraSandbox
+version: '${version}'
+main: com.stephanofer.hera.sandbox.HeraSandboxPlugin
+api-version: '26.1.2'
+load: POSTWORLD
+description: Sandbox consumidor local para probar el workspace Hera sin mezclar el framework con un plugin final.
