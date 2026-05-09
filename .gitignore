@@ -20,3 +20,8 @@ Thumbs.db
 # Temp
 *.tmp
 *.bak
+
+PlayerPoints/
+RoseGarden/
+zAuctionHouse/
+zMenu/

@@ -1,6 +1,0 @@
-group = "Hooks:Jobs"
-
-dependencies {
-    compileOnly(projects.common)
-    compileOnly(files("libs/Jobs5.2.2.3.jar"))
-}

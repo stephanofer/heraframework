@@ -1,7 +1,0 @@
-rootProject.name = 'RoseGarden'
-
-include('Core')
-include('Compatibility')
-include('Compatibility:Wrapper')
-include('Compatibility:Current')
-include('Compatibility:Legacy')
