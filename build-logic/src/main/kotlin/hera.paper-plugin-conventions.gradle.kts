@@ -7,7 +7,6 @@ import org.gradle.jvm.toolchain.JavaLanguageVersion
 
 plugins {
     java
-    id("xyz.jpenilla.run-paper")
 }
 
 val libs = the<VersionCatalogsExtension>().named("libs")
