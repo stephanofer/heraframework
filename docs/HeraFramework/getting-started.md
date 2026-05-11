@@ -7,16 +7,15 @@ Guía práctica para crear un plugin Paper nuevo, conectarlo a Hera y sacar un `
 - cómo crear el plugin consumidor
 - cómo agregar Hera como dependencia local
 - cómo empaquetar el plugin final con `shadow`
-- cómo inicializar el runtime modular
-- cómo levantar módulos/capacidades de Hera en `onEnable`
+- cómo instanciar módulos/capacidades de Hera en `onEnable`
 
 ## Quick path
 
 1. Creá el plugin Paper con Gradle Kotlin DSL.
 2. Publicá Hera en `mavenLocal()` o consumilo desde el mismo workspace.
 3. Agregá los módulos Hera que necesitás.
-4. En `onEnable`, construí el runtime y luego inicializá las capacidades que no entran al runtime.
-5. En `onDisable`, cerrá el runtime.
+4. En `onEnable`, instanciá las capacidades vivas que necesites.
+5. En `onDisable`, cerrá solo las capacidades que mantengan recursos.
 
 ---
 
@@ -94,9 +93,8 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:26.1.2.build.60-stable")
 
-    implementation("com.stephanofer.hera:hera-core-api:0.1.0-SNAPSHOT")
-    implementation("com.stephanofer.hera:hera-core-runtime:0.1.0-SNAPSHOT")
     implementation("com.stephanofer.hera:hera-command-paper:0.1.0-SNAPSHOT")
+    implementation("com.stephanofer.hera:hera-config:0.1.0-SNAPSHOT")
 }
 
 java {
@@ -132,9 +130,8 @@ Sumá solo lo que realmente uses.
 
 | Caso | Módulos mínimos |
 |---|---|
-| Runtime modular | `hera-core-api`, `hera-core-runtime` |
 | Comandos modernos | `hera-command-paper` |
-| Config futura | `hera-config` |
+| Configuración | `hera-config` |
 | Feedback futuro | `hera-feedback` |
 | Scheduler futuro | `hera-scheduler` |
 | MySQL futuro | `hera-data-mysql` |
@@ -150,30 +147,28 @@ Patrón recomendado:
 package com.example.friendssystem;
 
 import com.stephanofer.hera.command.paper.PaperCommandModule;
-import com.stephanofer.hera.core.api.HeraRuntime;
-import com.stephanofer.hera.core.runtime.HeraRuntimeBuilder;
+import com.stephanofer.hera.config.HeraConfigModule;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class FriendsSystemPlugin extends JavaPlugin {
 
-    private HeraRuntime heraRuntime;
+    private HeraConfigModule configModule;
     private PaperCommandModule commandModule;
 
     @Override
     public void onEnable() {
-        this.heraRuntime = new HeraRuntimeBuilder()
-            // .register(new FriendsConfigModule(...))
-            // .register(new FriendsDomainModule(...))
+        this.configModule = HeraConfigModule.builder(this)
+            // .file(...)
+            // .directory(...)
             .build();
-
         this.commandModule = new PaperCommandModule(this);
         // this.commandModule.register(FriendsCommands.create(...));
     }
 
     @Override
     public void onDisable() {
-        if (this.heraRuntime != null) {
-            this.heraRuntime.close();
+        if (this.configModule != null) {
+            this.configModule.close();
         }
     }
 }
@@ -183,42 +178,43 @@ public final class FriendsSystemPlugin extends JavaPlugin {
 
 | Pieza | Rol |
 |---|---|
-| `HeraRuntimeBuilder` | ordena, configura y arranca `HeraModule`s |
-| `HeraRuntime` | runtime vivo del framework; se debe cerrar en shutdown |
+| `HeraConfigModule` | prepara y expone configuración tipada/administrada para el plugin |
 | `PaperCommandModule` | integra comandos con la Command API moderna de Paper |
 
 ---
 
-## 6) Qué entra al runtime y qué no
+## 6) Qué se instancia y qué no
 
-Hoy hay dos estilos de integración:
+Hoy hay dos tipos de piezas en Hera:
 
-### A. Módulos runtime (`HeraModule`)
+### A. Librerías/API puras
 
-Van a `HeraRuntimeBuilder`.
+No necesitan inicialización explícita.
 
-Un módulo runtime tiene este contrato base:
+Ejemplos típicos:
+
+- `CommandSpec`
+- builders
+- validators
+- codecs
+
+### B. Capacidades vivas
+
+Necesitan `JavaPlugin`, lifecycle Paper, IO o recursos propios.
+
+Ejemplos actuales:
+
+- `PaperCommandModule`
+- `HeraConfigModule`
+
+Se instancian directamente en el plugin consumidor:
 
 ```java
-public interface HeraModule {
-    ModuleDescriptor descriptor();
-    default void configure(HeraRuntime runtime) throws Exception {}
-    default void start() throws Exception {}
-    default void stop() throws Exception {}
-}
-```
-
-### B. Capacidades con bootstrap propio
-
-Ejemplo actual: `hera-command-paper`.
-
-No se registra en `HeraRuntimeBuilder`; se inicializa explícitamente:
-
-```java
+this.configModule = HeraConfigModule.builder(this).build();
 this.commandModule = new PaperCommandModule(this);
 ```
 
-Eso está bien. No fuerces una capacidad al runtime si hoy su integración real vive mejor afuera.
+Eso es el enfoque oficial: `JavaPlugin` del consumidor como composition root, sin runtime global adicional.
 
 ---
 
@@ -227,8 +223,7 @@ Eso está bien. No fuerces una capacidad al runtime si hoy su integración real 
 ```java
 @Override
 public void onEnable() {
-    this.heraRuntime = new HeraRuntimeBuilder().build();
-
+    this.configModule = HeraConfigModule.builder(this).build();
     this.commandModule = new PaperCommandModule(this);
     this.commandModule.register(FriendsCommands.create(this.commandModule.visibilityRefresher()));
 }
@@ -236,8 +231,8 @@ public void onEnable() {
 
 La idea es:
 
-1. arrancás runtime base
-2. levantás capacidades de infraestructura necesarias
+1. levantás solo las capacidades de infraestructura que tu plugin necesita
+2. usás sus APIs listas para trabajar
 3. registrás comandos, hooks o integraciones de plugin
 
 ---
@@ -248,7 +243,7 @@ La idea es:
 - [ ] dependencias Hera agregadas
 - [ ] `shadowJar` configurado
 - [ ] se usa el jar final, no el `plain`
-- [ ] `HeraRuntime` se cierra en `onDisable`
+- [ ] se cierran en `onDisable` solo las capacidades que mantengan recursos
 - [ ] solo se agregaron los módulos/capacidades que el plugin necesita
 
 ---
@@ -271,7 +266,7 @@ La idea es:
 2. agregás repos + dependencias
 3. publicás Hera en `mavenLocal()` si el plugin es externo
 4. armás tu `FriendsSystemPlugin`
-5. inicializás runtime + capacidades
+5. inicializás solo las capacidades vivas necesarias
 6. generás el shadow jar
 7. copiás `build/libs/FriendsSystem-<version>.jar` al servidor
 

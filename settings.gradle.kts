@@ -20,8 +20,6 @@ dependencyResolutionManagement {
 rootProject.name = "HeraFramework"
 
 include(
-    "hera-core-api",
-    "hera-core-runtime",
     "hera-config",
     "hera-feedback",
     "hera-scheduler",

@@ -6,7 +6,6 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":hera-core-runtime"))
     implementation(project(":hera-command-paper"))
 }
 

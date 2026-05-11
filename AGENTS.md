@@ -9,15 +9,16 @@ Este proyecto existe para construir un framework interno modular para plugins Pa
 - Diseñar para **Paper moderno**.
 - Usar **composición sobre herencia**.
 - Organizar el framework en **capacidades modulares internas**.
-- Mantener el **core pequeño, limpio y agnóstico del negocio**.
+- Usar el **`JavaPlugin` consumidor como composition root**.
 - Tratar cada capacidad como **módulo opcional** cuando aplique.
 - Aislar zonas volátiles detrás de adapters claros.
-- Mantener hooks e integraciones externas fuera del core.
+- Mantener hooks e integraciones externas fuera de cualquier base compartida innecesaria.
 
 ## Principios de trabajo
 
 - No introducir compatibilidad legacy.
 - No diseñar alrededor de Bukkit antiguo si Paper ya ofrece una mejor API.
+- No introducir un runtime global propio, contenedor interno o autowiring por metadata.
 - No usar NMS salvo detección puntual o casos extremadamente acotados y aislados.
 - No centralizar lógica de negocio dentro del framework.
 - No agregar módulos por intuición; cada módulo debe tener responsabilidad clara.
@@ -37,7 +38,7 @@ Este proyecto existe para construir un framework interno modular para plugins Pa
 
 Antes de agregar una capacidad nueva, validar:
 
-1. si pertenece al core o a un módulo opcional,
+1. si realmente debe existir como módulo vivo o si alcanza con una librería/API pura,
 2. si Paper ya resuelve el problema de forma nativa,
 3. si introduce acoplamiento innecesario,
 4. si afecta versionado futuro,

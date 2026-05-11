@@ -11,7 +11,6 @@ public final class HeraSandboxPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         this.commandModule = new PaperCommandModule(this);
-        // this.commandModule.register(HeraSandboxCommands.createDemo(this.commandModule.visibilityRefresher()));
         this.commandModule.register(HeraSandboxCommands.createDemo(this.commandModule.visibilityRefresher()));
 
     }

@@ -25,7 +25,7 @@ El framework debe servir como plataforma para construir plugins y modalidades co
 
 ## Principios de diseño
 
-- Separación estricta entre core, infraestructura e integraciones.
+- Separación estricta entre infraestructura reusable, integraciones y lógica de negocio consumidora.
 - Dependencias explícitas entre módulos.
 - Ciclo de vida claro para startup, reload y shutdown.
 - Configuración tipada y validada.
@@ -38,6 +38,7 @@ El framework debe servir como plataforma para construir plugins y modalidades co
 - Plataforma objetivo: **Paper moderno**.
 - Arquitectura base: **composición**.
 - Organización interna: **modular**, con límites claros por capacidad.
+- Composition root en consumidores: **`JavaPlugin`**, sin runtime global propio.
 - Mensajería y texto: **Adventure + MiniMessage**, sin colores legacy.
 - Compatibilidad legacy: **no soportada**.
 - Folia: **fuera del alcance actual**.
@@ -51,11 +52,11 @@ El framework debe servir como plataforma para construir plugins y modalidades co
 
 ## Capacidades del producto
 
-### Runtime y composición modular
-- Registro de módulos.
-- Resolución de dependencias entre módulos.
-- Ciclo de vida por módulo.
-- Contrato claro para plugins consumidores.
+### Composición modular
+- Consumo explícito de módulos desde el `JavaPlugin` del plugin consumidor.
+- Inicialización directa de capacidades que necesitan estado, lifecycle o recursos propios.
+- APIs claras para usar cada capacidad sin contenedor ni runtime global.
+- Contrato simple y predecible para plugins consumidores.
 
 ### Configuración
 - Configuración tipada.
@@ -108,9 +109,12 @@ El framework debe servir como plataforma para construir plugins y modalidades co
 
 El producto debe permitir construir plugins que puedan elegir solo las piezas necesarias. Un plugin simple puede usar únicamente config, comandos y feedback. Un plugin más complejo puede además componer MySQL, Redis y hooks externos. El framework no debe cargar infraestructura innecesaria por defecto.
 
+La forma esperada de consumo es directa: el plugin agrega los módulos Hera que necesita como dependencias, instancia las capacidades vivas desde su `JavaPlugin` y usa sus APIs. Hera no debe introducir una segunda capa de runtime o contenedor por encima de Paper.
+
 ## Restricciones del producto
 
 - No usar patrones de framework monolítico basados en una superclase obligatoria.
+- No introducir un runtime global, contenedor interno o sistema de autowiring por metadata.
 - No meter lógica de negocio de modalidades dentro del framework.
 - No usar NMS como dependencia normal del diseño.
 - No acoplar el core a hooks opcionales.
